@@ -45,7 +45,6 @@ export class AuditLogService {
 
   getLogs(filter?: AuditLogFilter): Observable<AuditLog[]> {
     return this.logs$.pipe(
-      delay(200),
       map(logs => {
         if (!filter) {
           return logs;
@@ -78,7 +77,6 @@ export class AuditLogService {
 
   getRecentLogs(limit: number = 50): Observable<AuditLog[]> {
     return this.logs$.pipe(
-      delay(200),
       map(logs => logs.slice(0, limit))
     );
   }
