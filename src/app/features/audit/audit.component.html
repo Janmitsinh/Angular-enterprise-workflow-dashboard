@@ -1,0 +1,119 @@
+<div class="audit-container">
+  <header class="audit-header">
+    <h1>Audit Logs</h1>
+    <a routerLink="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+  </header>
+
+  @if (isLoading) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading audit logs...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <div class="error-message">
+        <h2>Error Loading Logs</h2>
+        <p>{{ error }}</p>
+        <button class="btn btn-primary" (click)="retry()">Retry</button>
+      </div>
+    </div>
+  } @else {
+    <div class="audit-content">
+      <div class="filter-card">
+        <h2>Filters</h2>
+        <form [formGroup]="filterForm" class="filter-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="action">Action</label>
+              <select id="action" formControlName="action">
+                <option value="">All Actions</option>
+                @for (action of actionTypes; track action) {
+                  <option [value]="action">{{ action }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="entityType">Entity Type</label>
+              <input 
+                id="entityType" 
+                type="text" 
+                formControlName="entityType" 
+                placeholder="e.g., Workflow, User">
+            </div>
+
+            <div class="form-group">
+              <label for="startDate">Start Date</label>
+              <input id="startDate" type="date" formControlName="startDate">
+            </div>
+
+            <div class="form-group">
+              <label for="endDate">End Date</label>
+              <input id="endDate" type="date" formControlName="endDate">
+            </div>
+
+            <div class="form-group">
+              <button type="button" class="btn btn-secondary" (click)="clearFilters()">Clear</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="logs-card">
+        <div class="logs-header">
+          <h2>Activity Log</h2>
+          <span class="log-count">{{ filteredLogs.length }} entries</span>
+        </div>
+
+        @if (filteredLogs.length === 0) {
+          <p class="empty-message">No audit logs found</p>
+        } @else {
+          <div class="logs-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Entity</th>
+                  <th>Details</th>
+                  <th>IP Address</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (log of filteredLogs; track log.id) {
+                  <tr>
+                    <td>{{ formatTimestamp(log.timestamp) }}</td>
+                    <td>
+                      @if (log.user) {
+                        <div class="user-cell">
+                          <div>{{ log.user.firstName }} {{ log.user.lastName }}</div>
+                          <div class="user-role">{{ log.user.role }}</div>
+                        </div>
+                      } @else {
+                        <span>Unknown User</span>
+                      }
+                    </td>
+                    <td>
+                      <span [class]="'action-badge ' + getActionClass(log.action)">
+                        {{ log.action }}
+                      </span>
+                    </td>
+                    <td>
+                      <div>{{ log.entityType }}</div>
+                      @if (log.entityId) {
+                        <div class="entity-id">ID: {{ log.entityId }}</div>
+                      }
+                    </td>
+                    <td>{{ log.details || '-' }}</td>
+                    <td>{{ log.ipAddress || '-' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
