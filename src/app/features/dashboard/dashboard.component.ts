@@ -41,26 +41,6 @@ export class DashboardComponent implements OnInit {
     }
     this.error = null;
 
-    this.workflowService.getMyWorkflows().subscribe({
-      next: (workflows) => {
-        this.myWorkflows = workflows;
-      },
-      error: (err) => {
-        this.error = 'Failed to load workflows';
-        this.isLoading = false;
-      }
-    });
-
-    this.workflowService.getPendingApprovals().subscribe({
-      next: (workflows) => {
-        this.pendingApprovals = workflows;
-      },
-      error: (err) => {
-        this.error = 'Failed to load pending approvals';
-        this.isLoading = false;
-      }
-    });
-
     this.workflowService.getWorkflows().subscribe({
       next: (workflows) => {
         this.allWorkflows = workflows;
@@ -69,6 +49,24 @@ export class DashboardComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load all workflows';
         this.isLoading = false;
+      }
+    });
+
+    this.workflowService.getMyWorkflows().subscribe({
+      next: (workflows) => {
+        this.myWorkflows = workflows;
+      },
+      error: (err) => {
+        console.error('Failed to load my workflows', err);
+      }
+    });
+
+    this.workflowService.getPendingApprovals().subscribe({
+      next: (workflows) => {
+        this.pendingApprovals = workflows;
+      },
+      error: (err) => {
+        console.error('Failed to load pending approvals', err);
       }
     });
   }

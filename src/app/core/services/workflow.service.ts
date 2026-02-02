@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { delay, map, tap } from 'rxjs/operators';
+import { delay, map } from 'rxjs/operators';
 import { 
   Workflow, 
   WorkflowRequest, 
@@ -10,15 +10,12 @@ import {
   ApprovalStep
 } from '../../models/workflow.model';
 import { AuthService } from './auth.service';
-import { AuditLogService } from './audit-log.service';
-import { AuditActionType } from '../../models/audit-log.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WorkflowService {
   private authService = inject(AuthService);
-  private auditLogService = inject(AuditLogService);
   
   private workflowsSubject = new BehaviorSubject<Workflow[]>([]);
   public workflows$ = this.workflowsSubject.asObservable();
@@ -93,14 +90,10 @@ export class WorkflowService {
   }
 
   getWorkflows(): Observable<Workflow[]> {
-    return this.workflows$.pipe(delay(300));
+    return this.workflows$;
   }
 
   getWorkflow(id: string): Observable<Workflow | undefined> {
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      this.auditLogService.log(AuditActionType.VIEW_WORKFLOW, 'Workflow', id);
-    }
     return this.workflows$.pipe(
       delay(200),
       map(workflows => workflows.find(w => w.id === id))
@@ -136,13 +129,6 @@ export class WorkflowService {
 
         const workflows = this.workflowsSubject.value;
         this.workflowsSubject.next([...workflows, newWorkflow]);
-        
-        this.auditLogService.log(
-          AuditActionType.CREATE_WORKFLOW, 
-          'Workflow', 
-          newWorkflow.id,
-          `Created workflow: ${newWorkflow.title}`
-        );
 
         return newWorkflow;
       })
@@ -208,18 +194,6 @@ export class WorkflowService {
         workflows[workflowIndex] = workflow;
         this.workflowsSubject.next(workflows);
 
-        // Log the action
-        const actionType = decision.action === ApprovalAction.APPROVE 
-          ? AuditActionType.APPROVE 
-          : AuditActionType.REJECT;
-        
-        this.auditLogService.log(
-          actionType,
-          'Workflow',
-          workflowId,
-          `${decision.action} workflow: ${workflow.title}`
-        );
-
         return workflow;
       })
     );
@@ -248,13 +222,6 @@ export class WorkflowService {
 
         workflows[workflowIndex] = workflow;
         this.workflowsSubject.next(workflows);
-
-        this.auditLogService.log(
-          AuditActionType.CANCEL_WORKFLOW,
-          'Workflow',
-          workflowId,
-          `Cancelled workflow: ${workflow.title}`
-        );
 
         return workflow;
       })

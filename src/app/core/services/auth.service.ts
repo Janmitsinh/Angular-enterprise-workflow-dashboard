@@ -1,15 +1,12 @@
-import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { delay, map, tap } from 'rxjs/operators';
 import { User, UserRole, AuthResponse, LoginCredentials } from '../../models/user.model';
-import { AuditLogService } from './audit-log.service';
-import { AuditActionType } from '../../models/audit-log.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private auditLogService = inject(AuditLogService);
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
@@ -83,16 +80,11 @@ export class AuthService {
       tap(response => {
         this.setToken(response.token);
         this.currentUserSubject.next(response.user);
-        this.auditLogService.log(AuditActionType.LOGIN, 'User', response.user.id);
       })
     );
   }
 
   logout(): void {
-    const currentUser = this.currentUserSubject.value;
-    if (currentUser) {
-      this.auditLogService.log(AuditActionType.LOGOUT, 'User', currentUser.id);
-    }
     this.removeToken();
     this.currentUserSubject.next(null);
   }
