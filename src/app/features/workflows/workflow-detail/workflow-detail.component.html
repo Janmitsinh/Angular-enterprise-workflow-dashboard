@@ -1,0 +1,194 @@
+<div class="workflow-detail-container">
+  @if (isLoading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading workflow...</p>
+    </div>
+  } @else if (error() && !workflow()) {
+    <div class="error-container">
+      <div class="error-card">
+        <h2>Error</h2>
+        <p>{{ error() }}</p>
+        <div class="error-actions">
+          <button class="btn btn-primary" (click)="retry()">Retry</button>
+          <button class="btn btn-secondary" (click)="goBack()">Go Back</button>
+        </div>
+      </div>
+    </div>
+  } @else if (workflow(); as wf) {
+    <div class="workflow-detail-card">
+      <!-- Header -->
+      <div class="workflow-header">
+        <div class="header-content">
+          <button class="btn-back" (click)="goBack()">← Back</button>
+          <h1>{{ wf.title }}</h1>
+          <span [class]="getStatusClass(wf.status)" class="status-badge">
+            {{ wf.status }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Workflow Info -->
+      <div class="workflow-info">
+        <div class="info-section">
+          <h2>Description</h2>
+          <p>{{ wf.description }}</p>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Requester</label>
+            <span>
+              @if (wf.requester) {
+                {{ wf.requester.firstName }} {{ wf.requester.lastName }}
+              } @else {
+                Unknown
+              }
+            </span>
+          </div>
+          <div class="info-item">
+            <label>Created</label>
+            <span>{{ wf.createdAt | date:'medium' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Last Updated</label>
+            <span>{{ wf.updatedAt | date:'medium' }}</span>
+          </div>
+          @if (wf.completedAt) {
+            <div class="info-item">
+              <label>Completed</label>
+              <span>{{ wf.completedAt | date:'medium' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      @if (error()) {
+        <div class="alert alert-error">
+          {{ error() }}
+        </div>
+      }
+
+      <!-- Approval Form (if user can approve current step) -->
+      @if (canApprove(); as step) {
+        <div class="approval-section">
+          <h2>Your Approval Required</h2>
+          <p class="approval-description">
+            You are assigned to approve Step {{ step.stepNumber }} as a {{ step.approverRole }}.
+          </p>
+
+          <form [formGroup]="approvalForm" (ngSubmit)="onSubmitApproval()">
+            <div class="form-group">
+              <label>Decision *</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input 
+                    type="radio" 
+                    formControlName="action" 
+                    [value]="ApprovalAction.APPROVE">
+                  <span class="radio-text approve">Approve</span>
+                </label>
+                <label class="radio-label">
+                  <input 
+                    type="radio" 
+                    formControlName="action" 
+                    [value]="ApprovalAction.REJECT">
+                  <span class="radio-text reject">Reject</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="comments">Comments *</label>
+              <textarea 
+                id="comments" 
+                formControlName="comments" 
+                rows="4"
+                placeholder="Enter your comments (minimum 5 characters)"
+                [class.error]="comments?.invalid && comments?.touched"></textarea>
+              @if (comments?.invalid && comments?.touched) {
+                <div class="error-message">
+                  @if (comments?.errors?.['required']) {
+                    <span>Comments are required</span>
+                  }
+                  @if (comments?.errors?.['minlength']) {
+                    <span>Comments must be at least 5 characters</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <button 
+              type="submit" 
+              class="btn btn-primary" 
+              [disabled]="approvalForm.invalid || isSubmitting()">
+              @if (isSubmitting()) {
+                <span>Submitting...</span>
+              } @else {
+                <span>Submit Decision</span>
+              }
+            </button>
+          </form>
+        </div>
+      }
+
+      <!-- Approval Steps -->
+      <div class="steps-section">
+        <h2>Approval Steps</h2>
+        <div class="steps-timeline">
+          @for (step of wf.steps; track trackByStepId($index, step)) {
+            <div class="step-item" [class.completed]="step.status === WorkflowStatus.APPROVED"
+                                    [class.rejected]="step.status === WorkflowStatus.REJECTED"
+                                    [class.pending]="step.status === WorkflowStatus.PENDING"
+                                    [class.draft]="step.status === WorkflowStatus.DRAFT">
+              <div class="step-indicator">
+                <div class="step-number">{{ step.stepNumber }}</div>
+              </div>
+              <div class="step-content">
+                <div class="step-header-row">
+                  <h3>Step {{ step.stepNumber }}</h3>
+                  <span [class]="getStatusClass(step.status)" class="status-badge">
+                    {{ step.status }}
+                  </span>
+                </div>
+                <div class="step-details">
+                  <p><strong>Approver Role:</strong> {{ step.approverRole }}</p>
+                  <p><strong>Required:</strong> {{ step.required ? 'Yes' : 'No' }}</p>
+                  @if (step.approver) {
+                    <p><strong>Approved By:</strong> {{ step.approver.firstName }} {{ step.approver.lastName }}</p>
+                  }
+                  @if (step.approvedAt) {
+                    <p><strong>Approved At:</strong> {{ step.approvedAt | date:'medium' }}</p>
+                  }
+                  @if (step.comments) {
+                    <div class="step-comments">
+                      <strong>Comments:</strong>
+                      <p>{{ step.comments }}</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Actions -->
+      @if (canCancel()) {
+        <div class="workflow-actions">
+          <button 
+            class="btn btn-danger" 
+            (click)="onCancelWorkflow()"
+            [disabled]="isCancelling()">
+            @if (isCancelling()) {
+              <span>Cancelling...</span>
+            } @else {
+              <span>Cancel Workflow</span>
+            }
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

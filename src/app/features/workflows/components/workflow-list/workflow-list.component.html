@@ -1,0 +1,34 @@
+<div class="workflow-list">
+  @if (workflows.length === 0) {
+    <div class="empty-message">
+      <p>No workflows found</p>
+    </div>
+  } @else {
+    @for (workflow of workflows; track trackByWorkflowId($index, workflow)) {
+      <div class="workflow-card" (click)="onWorkflowClick(workflow.id)">
+        <div class="workflow-card-header">
+          <h3>{{ workflow.title }}</h3>
+          <span [class]="getStatusClass(workflow.status)" class="status-badge">
+            {{ workflow.status }}
+          </span>
+        </div>
+        <p class="workflow-description">{{ workflow.description }}</p>
+        <div class="workflow-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="getProgressPercentage(workflow)"></div>
+          </div>
+          <span class="progress-text">
+            {{ getProgressPercentage(workflow) }}% Complete
+            ({{ workflow.currentStepNumber }} of {{ workflow.steps.length }} steps)
+          </span>
+        </div>
+        <div class="workflow-meta">
+          <span>Created: {{ workflow.createdAt | date:'short' }}</span>
+          @if (workflow.requester) {
+            <span>Requester: {{ workflow.requester.firstName }} {{ workflow.requester.lastName }}</span>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

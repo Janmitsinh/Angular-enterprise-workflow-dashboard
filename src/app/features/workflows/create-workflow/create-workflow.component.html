@@ -1,0 +1,135 @@
+<div class="create-workflow-container">
+  <div class="create-workflow-card">
+    <div class="header">
+      <h1>Create New Workflow</h1>
+      <p>Define your workflow details and approval steps</p>
+    </div>
+
+    <form [formGroup]="workflowForm" (ngSubmit)="onSubmit()">
+      <!-- Workflow Details Section -->
+      <div class="form-section">
+        <h2>Workflow Details</h2>
+        
+        <div class="form-group">
+          <label for="title">Title *</label>
+          <input 
+            id="title" 
+            type="text" 
+            formControlName="title" 
+            placeholder="Enter workflow title"
+            [class.error]="title?.invalid && title?.touched">
+          @if (title?.invalid && title?.touched) {
+            <div class="error-message">
+              @if (title?.errors?.['required']) {
+                <span>Title is required</span>
+              }
+              @if (title?.errors?.['minlength']) {
+                <span>Title must be at least 3 characters</span>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea 
+            id="description" 
+            formControlName="description" 
+            rows="4"
+            placeholder="Enter workflow description"
+            [class.error]="description?.invalid && description?.touched"></textarea>
+          @if (description?.invalid && description?.touched) {
+            <div class="error-message">
+              @if (description?.errors?.['required']) {
+                <span>Description is required</span>
+              }
+              @if (description?.errors?.['minlength']) {
+                <span>Description must be at least 10 characters</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Approval Steps Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2>Approval Steps</h2>
+          <button type="button" class="btn btn-secondary" (click)="addStep()">
+            + Add Step
+          </button>
+        </div>
+
+        <div formArrayName="steps" class="steps-container">
+          @for (step of steps.controls; track $index) {
+            <div [formGroupName]="$index" class="step-card">
+              <div class="step-header">
+                <h3>Step {{ $index + 1 }}</h3>
+                @if (steps.length > 1) {
+                  <button 
+                    type="button" 
+                    class="btn-remove" 
+                    (click)="removeStep($index)"
+                    title="Remove step">
+                    ✕
+                  </button>
+                }
+              </div>
+
+              <div class="step-content">
+                <div class="form-group">
+                  <label [for]="'approverRole-' + $index">Approver Role *</label>
+                  <select 
+                    [id]="'approverRole-' + $index"
+                    formControlName="approverRole"
+                    class="form-select">
+                    @for (role of approverRoles; track role.value) {
+                      <option [value]="role.value">{{ role.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      formControlName="required">
+                    <span>Required Step</span>
+                  </label>
+                  <small>If unchecked, this step can be skipped</small>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="alert alert-error">
+          {{ error() }}
+        </div>
+      }
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="onCancel()"
+          [disabled]="isSubmitting()">
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary" 
+          [disabled]="workflowForm.invalid || isSubmitting()">
+          @if (isSubmitting()) {
+            <span>Creating...</span>
+          } @else {
+            <span>Create Workflow</span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

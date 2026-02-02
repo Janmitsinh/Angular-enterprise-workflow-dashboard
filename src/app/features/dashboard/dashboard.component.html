@@ -1,0 +1,119 @@
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <h1>Workflow Dashboard</h1>
+    <div class="user-info">
+      @if (currentUser) {
+        <span class="user-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</span>
+        <span class="user-role">{{ currentUser.role }}</span>
+        <button class="btn btn-secondary" (click)="logout()">Logout</button>
+      }
+    </div>
+  </header>
+
+  @if (isLoading) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading workflows...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <div class="error-message">
+        <h2>Error Loading Data</h2>
+        <p>{{ error }}</p>
+        <button class="btn btn-primary" (click)="retry()">Retry</button>
+      </div>
+    </div>
+  } @else {
+    <div class="dashboard-content">
+      <div class="actions-bar">
+        <a routerLink="/workflows/create" class="btn btn-primary">Create New Workflow</a>
+        <a routerLink="/audit" class="btn btn-secondary">View Audit Logs</a>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Pending Approvals -->
+        <div class="dashboard-card">
+          <h2>Pending Approvals ({{ pendingApprovals.length }})</h2>
+          @if (pendingApprovals.length === 0) {
+            <p class="empty-message">No pending approvals</p>
+          } @else {
+            <div class="workflow-list">
+              @for (workflow of pendingApprovals; track workflow.id) {
+                <div class="workflow-item" [routerLink]="['/workflows', workflow.id]">
+                  <div class="workflow-header">
+                    <h3>{{ workflow.title }}</h3>
+                    <span [class]="getStatusClass(workflow.status)">{{ workflow.status }}</span>
+                  </div>
+                  <p class="workflow-description">{{ workflow.description }}</p>
+                  <div class="workflow-meta">
+                    <span>Step {{ workflow.currentStepNumber }} of {{ workflow.steps.length }}</span>
+                    <span>{{ formatDate(workflow.createdAt) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- My Workflows -->
+        <div class="dashboard-card">
+          <h2>My Workflows ({{ myWorkflows.length }})</h2>
+          @if (myWorkflows.length === 0) {
+            <p class="empty-message">No workflows created yet</p>
+          } @else {
+            <div class="workflow-list">
+              @for (workflow of myWorkflows; track workflow.id) {
+                <div class="workflow-item" [routerLink]="['/workflows', workflow.id]">
+                  <div class="workflow-header">
+                    <h3>{{ workflow.title }}</h3>
+                    <span [class]="getStatusClass(workflow.status)">{{ workflow.status }}</span>
+                  </div>
+                  <p class="workflow-description">{{ workflow.description }}</p>
+                  <div class="workflow-meta">
+                    <span>Step {{ workflow.currentStepNumber }} of {{ workflow.steps.length }}</span>
+                    <span>{{ formatDate(workflow.createdAt) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- All Workflows -->
+        <div class="dashboard-card full-width">
+          <h2>All Workflows ({{ allWorkflows.length }})</h2>
+          @if (allWorkflows.length === 0) {
+            <p class="empty-message">No workflows in the system</p>
+          } @else {
+            <div class="workflow-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Progress</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (workflow of allWorkflows; track workflow.id) {
+                    <tr>
+                      <td>{{ workflow.title }}</td>
+                      <td><span [class]="getStatusClass(workflow.status)">{{ workflow.status }}</span></td>
+                      <td>{{ workflow.currentStepNumber }} / {{ workflow.steps.length }}</td>
+                      <td>{{ formatDate(workflow.createdAt) }}</td>
+                      <td>
+                        <a [routerLink]="['/workflows', workflow.id]" class="link-btn">View</a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
